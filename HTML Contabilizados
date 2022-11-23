@@ -1,0 +1,257 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="UTF-8" isELIgnored="false" %>
+	<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+	<%@ page import="java.util.*" %>
+		<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+			<%@ taglib prefix="snk" uri="/WEB-INF/tld/sankhyaUtil.tld" %>
+            <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+				<html>      
+				<head>
+					<title>HTML5 Component</title>
+					<link rel="stylesheet" type="text/css" href="mainCSS.css">
+					<snk:load />
+					<script type='text/javascript'>
+						function abrirFinanceiros(codNat) {
+							var params = { 'A_CODNAT': codNat };
+							openLevel('lvl_a6616yv', params);
+						}
+					</script>
+								</head>
+
+				<body>
+					<h2>DRE - CAIXA</h2>
+					<snk:query var="teste">
+                        SELECT
+                        CASE
+                            WHEN C.TIPMOV = 'C' THEN 'COMPRA'
+                            WHEN C.TIPMOV = 'D' THEN 'DEV_VENDA'
+                            WHEN C.TIPMOV = 'V' THEN 'VENDA'
+                            WHEN C.TIPMOV = 'E' THEN 'DEV_COMPRA'
+                        END AS TIPO,
+                        C.NUNOTA AS UNICO,
+                        C.NUMNOTA AS NUMNOTA,
+                        C.CODEMP AS CODEMP,
+                        E.RAZAOSOCIAL AS RAZAOSOCIAL,
+                        (
+                            CASE
+                                WHEN C.TIPMOV IN ('C', 'D', 'E', 'V') THEN C.DTENTSAI
+                                ELSE C.DTNEG
+                            END
+                        ) DTMOV,
+                        C.VLRNOTA AS VLR,
+                        C.CODTIPOPER AS TOPI,
+                        T.DESCROPER AS DESCRTOP,
+                        L.CODCTACTB,
+                        P.DESCRCTA
+                        
+                    FROM
+                        TGFCAB C
+                        LEFT JOIN TCBINT I ON I.NUNICO = C.NUNOTA
+                        AND I.ORIGEM = 'E'
+                        LEFT JOIN TSIEMP E ON E.CODEMP = C.CODEMP
+                        INNER JOIN TGFTOP T ON T.CODTIPOPER = C.CODTIPOPER
+                        AND T.DHALTER = C.DHTIPOPER
+                        INNER JOIN TCBLAN L ON L.SEQUENCIA = I.SEQUENCIA
+                        AND L.TIPLANC = I.TIPLANC
+                        AND L.NUMLANC = I.NUMLANC
+                        AND L.NUMLOTE = I.NUMLOTE
+                        AND L.REFERENCIA = I.REFERENCIA
+                        AND L.CODEMP = I.CODEMP
+                        INNER JOIN TCBPLA P ON P.CODCTACTB = L.CODCTACTB
+                    WHERE
+                        T.TIPMOV IN ('C', 'D', 'E', 'V')
+                        AND (
+                            (
+                                CASE
+                                    WHEN C.TIPMOV IN ('V') THEN DTNEG
+                                END
+                            ) BETWEEN  :PERIODO.INI
+                            AND :PERIODO.FIN
+                            OR (
+                                CASE
+                                    WHEN C.TIPMOV IN ('C', 'D', 'E') THEN DTENTSAI
+                                END
+                            ) BETWEEN :PERIODO.INI
+                            AND :PERIODO.FIN
+                        )
+                        AND T.ATUALCTB = 'S'
+                        AND C.STATUSNOTA = 'L'
+                        AND I.NUNICO = C.NUNOTA
+                        AND C.CODEMP IN (:EMP)
+                        AND C.CODTIPOPER IN (:TIPOPER)
+					</snk:query>
+
+					<table class="styled-table">
+						<tbody>
+						<tr>
+							<th>Tipo</th>
+							<th>Número Único</th>
+							<th>Numero Nota</th>
+							<th>Empresa</th>
+							<th>Razão Social</th>
+							<th>Data Movimento</th>
+							<th>Valor Contabilizado</th>
+							<th>Tipo de Operação</th>
+							<th>Descrição TOP</th>
+							<th>Conta Contábil Reduzida</th>
+							<th>Descrição Conta Contábil</th>
+						</tr>
+						<c:forEach items="${teste.rows}" var="row">
+							<tr class="active-row">
+								<td>
+									<c:out value="${row.TIPO}" />
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.UNICO}"/>
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.NUMNOTA}"/>
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.CODEMP}"/>
+								</td>
+								<td class="column100">
+                                    <c:out value="${row.RAZAOSOCIAL}" />
+								</td>
+								<td class="column100">
+									<c:out value="${row.DTMOV}" />
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.VLR}" type="currency"/>
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.TOPI}"/>
+								</td>
+								<td class="column100">
+									<c:out value="${row.DESCRTOP}" />
+								</td>
+								<td class="column100">
+									<fmt:formatNumber value ="${row.CODCTACTB}" type="currency"/>
+								</td>
+								<td class="column100">
+									<c:out value="${row.DESCRCTA}" />
+								</td>
+							</tr>
+						</c:forEach>
+					</tbody>
+					</table>
+				</body>
+				</html>
+
+<style>
+  .styled-table {
+	border-collapse: collapse;
+    margin: auto;
+    border: 1px solid;
+    border-color: #424242;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.377);
+    padding: auto;
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+.styled-table th,
+.styled-table td {
+white-space: nowrap;
+}
+tr:hover{
+    background-color: #f2f2f2;
+}
+
+td{
+    margin:  5px 20px;
+    padding:  5px 20px;
+}
+
+a:hover {
+  color: black;
+  font-size: 1em;
+  transition: 0.9s;
+  cursor: pointer;
+}
+
+a:active {
+  color: #67b588;
+}
+
+.styled-table tbody tr {
+    font-weight: bold;
+    color: #4c3a5e;
+}
+
+a {
+  text-decoration: none;
+  color: #4c3a5e;
+}
+
+
+h2{
+	text-align: center;
+	size: 20px;
+    font-family: "Raleway", sans-serif;
+}
+
+.column100{
+	text-align: right;
+
+}
+
+tbody tr.active-row:nth-of-type(2){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+
+tbody tr.active-row:nth-of-type(3){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(6){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(8){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(9){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(14){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(15){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(24){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(25){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(28){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(31){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(33){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(34){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+tbody tr.active-row:nth-of-type(36){
+  background-color: #91c68d;
+  color: #4c3a5e;
+}
+
+</style>
