@@ -1,0 +1,192 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="UTF-8" isELIgnored="false" %>
+	<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+	<%@ page import="java.util.*" %>
+		<%@ taglib uri="http://java.sun.com/jstl/core_rt" prefix="c" %>
+			<%@ taglib prefix="snk" uri="/WEB-INF/tld/sankhyaUtil.tld" %>
+            <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+				<html>      
+				<head>
+					<title>HTML5 Component</title>
+					<link rel="stylesheet" type="text/css" href="mainCSS.css">
+					<snk:load />
+
+					<script type='text/javascript'>
+						function abrirFinanceiros(ID) {
+							var params = { 'ID': ID };
+							openApp('br.com.sankhya.menu.adicional.AD_OS', params);
+						}
+					</script>
+
+								</head>
+
+				<body>
+					<snk:query var="teste">
+						SELECT
+						EXE.*,
+						USU.NOMEUSU,
+					CASE
+							WHEN EXE.FIM IS NOT NULL THEN (
+								CASE
+									WHEN LENGTH(TRUNC (24 * (EXE.FIM - EXE.INICIO))) = 1 THEN '0' || TRUNC (24 * (EXE.FIM - EXE.INICIO))
+									ELSE TO_CHAR(TRUNC (24 * (EXE.FIM - EXE.INICIO)))
+								END
+							) || ':' || (
+								CASE
+									WHEN LENGTH(TRUNC(mod(mod(EXE.FIM - EXE.INICIO, 1) * 24, 1) * 60)) = 1 THEN '0' || TRUNC(mod(mod(EXE.FIM - EXE.INICIO, 1) * 24, 1) * 60)
+									ELSE TO_CHAR(TRUNC(mod(mod(EXE.FIM - EXE.INICIO, 1) * 24, 1) * 60))
+								END
+							)
+							ELSE ' '
+						END AS TEMPOGASTO,
+						CASE
+							WHEN EXE.FIM IS NULL THEN 'ABERTA'
+							WHEN EXE.FIM IS NOT NULL THEN 'FECHADA'
+						END STATUS
+					FROM
+						AD_EXEC EXE
+						LEFT JOIN TSIUSU USU ON EXE.CODUSU = USU.CODUSU
+						LEFT JOIN AD_OS OS ON OS.ID = EXE.ID
+						LEFT JOIN TGFPAR PAR ON PAR.CODPARC = OS.CODPARC
+					WHERE
+						((EXE.CODUSU = :CODUSU)
+						OR (:CODUSU IS NULL))
+						AND EXE.FIM IS NULL
+						AND ((OS.CODPARC = :CODPARC)
+						OR (:CODPARC IS NULL))
+						AND (EXE.INICIO BETWEEN :DTINI AND :DTFIN
+						OR :DTINI IS NULL OR :DTFIN IS NULL )
+					</snk:query>
+
+					<table class="styled-table">
+						<tbody>
+						<tr>
+							<th>Nr. Os</th>
+							<th>Nr. Sub OS</th>
+							<th>Id. Execução</th>
+							<th>Inicio</th>
+							<th>Fim</th>
+							<th>Cód. Executante</th>
+							<th>Nome Executante</th>
+							<th>Solução</th>
+							<th>Tempo Gasto</th>
+							<th>Status</th>
+						</tr>
+
+						<c:forEach items="${teste.rows}" var="row">
+							<tr class="active-row">
+                                
+								<td>
+                                <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+								    <c:out value="${row.ID}"/>
+                                </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.IDSUB}"/>
+                                </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.IDEXEC}"/>
+                                </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<fmt:formatDate value="${row.INICIO}" type = "date" />  </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+                                    <fmt:formatDate value="${row.FIM}" type = "date" />  </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.CODUSU}"/> </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+                                    <c:out value="${row.NOMEUSU}"/> </a>
+								</td>
+								<td>
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.SOLUCAO}"/> </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.TEMPOGASTO}"/> </a>
+								</td>
+								<td class="column100">
+                                    <a href="javascript:abrirFinanceiros(${row.ID})" class="fixed">
+									<c:out value="${row.STATUS}"/> </a>
+								</td>
+							</tr>
+						</c:forEach>
+					</tbody>
+					</table>
+				</body>
+				</html>
+
+<style>
+    .styled-table {
+	border-collapse: collapse;
+    margin: auto;
+    border: 1px solid;
+    border-color: #424242;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.377);
+    padding: auto;
+    max-width: 100%;
+    font-size: 14;
+}
+
+th{
+    background-color: #67b588;
+    padding: 10px;
+}
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+.styled-table th,
+.styled-table td {
+white-space: nowrap;
+}
+tr:hover{
+    background-color: #f2f2f2;
+}
+
+td{
+    margin:  10px 15px;
+    padding:  10px 15px;
+}
+
+a:hover {
+  color: black;
+  font-size: 15px;
+  transition: 0.9s;
+  cursor: pointer;
+}
+
+a:active {
+  color: #67b588;
+}
+
+.styled-table tbody tr {
+    font-weight: bold;
+    color: #4c3a5e;
+}
+
+a {
+  text-decoration: none;
+  color: #4c3a5e;
+}
+
+
+h2{
+	text-align: center;
+	size: 20px;
+    font-family: "Raleway", sans-serif;
+}
+
+.column100{
+	text-align: right;
+
+}
+</style>
